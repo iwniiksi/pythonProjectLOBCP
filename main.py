@@ -3,7 +3,10 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lobcp.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = ('sqlite:///films.db')
+
+app.config['SQLALCHEMY_DATABASE_URI'] = ('sqlite:///users.db')
+
 app.config['SQLALCHEMY_TRACK_MODIFICATION'] = False
 db = SQLAlchemy(app)
 
@@ -17,6 +20,15 @@ class Article(db.Model):
 
     def __repr__(self):
         return '<Article %r>' % self.id
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nickname = db.Column(db.String(20), nullable=False)
+    password = db.Column(db.String(20), nullable=False)
+
+    def __repr__(self):
+        return '<User %r>' % self.id
 
 
 @app.route('/')
@@ -48,6 +60,25 @@ def create_article():
             return "При добавлении статьи произошла ошибка"
     else:
         return render_template("create-article.html")
+
+
+@app.route('/sign_up', methods=['POST', "GET"])
+def register():
+    if request.method == "POST":
+        nickname = request.form['nickname']
+        password = request.form['password']
+
+        user = User(nickname=nickname, password=password)
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+            return redirect('/')
+
+        except:
+            return "При добавлении статьи произошла ошибка"
+    else:
+        return render_template("register.html")
 
 
 if __name__ == "__main__":
