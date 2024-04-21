@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = ('sqlite:///films.db')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = ('sqlite:///users.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = ('sqlite:///user.db')
 
 app.config['SQLALCHEMY_TRACK_MODIFICATION'] = False
 db = SQLAlchemy(app)
@@ -26,6 +26,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nickname = db.Column(db.String(20), nullable=False)
     password = db.Column(db.String(20), nullable=False)
+    key = db.Column(db.String(20), nullable=True)
 
     def __repr__(self):
         return '<User %r>' % self.id
@@ -67,8 +68,9 @@ def register():
     if request.method == "POST":
         nickname = request.form['nickname']
         password = request.form['password']
+        key = request.form['key']
 
-        user = User(nickname=nickname, password=password)
+        user = User(nickname=nickname, password=password, key=key)
 
         try:
             db.session.add(user)
