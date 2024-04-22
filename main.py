@@ -4,9 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 from sqlalchemy import orm
 from sqlalchemy.orm import Session
-from flask_login import UserMixin
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import InputRequired, Length, ValidationError
 
 ADMIN_KEY = '123abc456def'
 
