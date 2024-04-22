@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
-
 {% block title %}
-<h1>Welcome</h1>
+Welcome
 {% endblock %}
 
 {% block body %}
@@ -10,7 +9,7 @@
     <form method="post">
         <input type="text" name="nickname" id="nickname" class="form-control" placeholder="Введите никнейм"><br>
         <textarea name="password" id="password" class="form-control" placeholder="Введите пароль"></textarea><br>
-        <textarea name="key" id="key" class="form-control" placeholder="Введите особый код(только для администраторов)"></textarea><br>
+        <textarea name="key" id="key" class="form-control" placeholder="Введите особый код (только для администраторов)" ></textarea><br>
         <input type="submit" class="btn btn-success" value="Отправить"><br>
     </form>
 </div>
