@@ -1,11 +1,14 @@
 from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
+
 from datetime import datetime, timezone
 
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, StringField, TextAreaField, SubmitField, EmailField, BooleanField
 from wtforms.validators import DataRequired
-from flask_login import LoginManager, login_user
+
+import flask_login
+from flask_login import LoginManager, login_user, UserMixin
 
 import sqlalchemy
 from sqlalchemy import orm
@@ -30,6 +33,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+
 def global_init(db_file):
     global __factory
 
@@ -50,6 +54,11 @@ def global_init(db_file):
 def create_session() -> Session:
     global __factory
     return __factory()
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, user_id)
 
 
 class RegisterForm(FlaskForm):
@@ -74,9 +83,7 @@ class Article(SqlAlchemyBase):
         return '<Article %r>' % self.id
 
 
-
-
-class User(SqlAlchemyBase):
+class User(SqlAlchemyBase, UserMixin):
     __tablename__ = 'users'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
@@ -97,17 +104,10 @@ class User(SqlAlchemyBase):
 
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
     email = EmailField('Почта', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign In')
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    db_sess = create_session()
-    return db_sess.query(User).get(user_id)
 
 
 @app.route('/')
