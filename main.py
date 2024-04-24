@@ -8,7 +8,7 @@ from wtforms import PasswordField, StringField, TextAreaField, SubmitField, Emai
 from wtforms.validators import DataRequired
 
 import flask_login
-from flask_login import LoginManager, login_user, UserMixin
+from flask_login import LoginManager, login_user, UserMixin, login_required, logout_user
 
 import sqlalchemy
 from sqlalchemy import orm
@@ -115,6 +115,10 @@ class LoginForm(FlaskForm):
 def index():
     return render_template('index.html')
 
+@app.route('/profile')
+def profile():
+    return render_template('profile.html')
+
 
 @app.route('/FAQ')
 def faq():
@@ -180,6 +184,13 @@ def register():
         db.session.commit()
         return redirect('/login')
     return render_template('register.html', form=form)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
 
 
 if __name__ == '__main__':
