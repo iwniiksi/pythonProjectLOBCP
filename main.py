@@ -1,30 +1,21 @@
-from flask import Flask, render_template, request, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-
 from datetime import datetime, timezone
 
-from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, TextAreaField, SubmitField, EmailField, BooleanField, form
-from wtforms.validators import DataRequired
-
-import flask_login
-from flask_login import LoginManager, login_user, UserMixin, login_required, logout_user, current_user
-
 import sqlalchemy
+from flask import Flask, render_template, redirect, url_for
+from flask_login import LoginManager, login_user, UserMixin, login_required, logout_user, current_user
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import FlaskForm
 from sqlalchemy import orm
 from sqlalchemy.orm import Session
-
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_wtf.file import FileField
-
+from wtforms import PasswordField, StringField, TextAreaField, SubmitField, EmailField, BooleanField, IntegerField
+from wtforms.validators import DataRequired
 
 ADMIN_KEY = '123abc456def'  # !!!!!!
-
 
 SqlAlchemyBase = orm.declarative_base()
 
 __factory = None
-
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'key'  # !!!!!!
@@ -71,17 +62,54 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Войти')
 
 
-class Article(SqlAlchemyBase):
-    __tablename__ = 'articles'
+class LoginForm(FlaskForm):
+    email = EmailField('Почта', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember_me = BooleanField('Remember Me')
+    submit = SubmitField('Sign In')
+
+
+class CardForm(FlaskForm):
+    title = StringField('Название', validators=[DataRequired()])
+    released_year = IntegerField('Год выхода')
+    runtime = IntegerField('Продолжительность (в мин)')
+    genre = StringField('Жанр/ы')
+    director = StringField('Режиссёр')
+    submit = SubmitField('Добавить')
+
+
+class Card(SqlAlchemyBase):
+    __tablename__ = 'cards'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     title = sqlalchemy.Column(sqlalchemy.String(100), nullable=False)
-    intro = sqlalchemy.Column(sqlalchemy.String(300), nullable=False)
-    text = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
-    date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.now(timezone.utc))
+    released_year = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    runtime = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    genre = sqlalchemy.Column(sqlalchemy.String(100), nullable=True)
+    director = sqlalchemy.Column(sqlalchemy.String(100), nullable=True)
+    user_rating = sqlalchemy.Column(sqlalchemy.Float, nullable=True)
+    list_of_user_ratings = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+    # rating = sqlalchemy.Column(sqlalchemy.Float, nullable=True)
+    # list_of_ratings = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+    created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.now(timezone.utc))
 
     def __repr__(self):
-        return '<Article %r>' % self.id
+        return '<Card %r>' % self.id
+
+    # def update_rating(self):
+    #     summ, amount = 0, 0
+    #     for score, value in self.list_of_user_ratings.items():
+    #         summ += int(score) * value
+    #         amount += value
+    #     rating = summ / amount
+    #     self.user_rating = rating
+
+    # def add_score(self, score: int):
+    #     if 1 <= score <= 10:
+    #         self.list_of_user_ratings[str(score)] += 1
+    #         self.update_rating()
+    #     else:
+    #         raise ValueError
 
 
 class User(SqlAlchemyBase, UserMixin):
@@ -90,7 +118,8 @@ class User(SqlAlchemyBase, UserMixin):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String(20), nullable=False, unique=True)
     email = sqlalchemy.Column(sqlalchemy.String, index=True, unique=True, nullable=True)
-    image_file = sqlalchemy.Column(sqlalchemy.String(20), nullable=False, default='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJx9X1j4gDIYI6mbjf2iO_x3DVLNg2CCvFgmlqIorCsA&s%22')
+    image_file = sqlalchemy.Column(sqlalchemy.String(20), nullable=False,
+                                   default='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJx9X1j4gDIYI6mbjf2iO_x3DVLNg2CCvFgmlqIorCsA&s%22')
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.now(timezone.utc))
     is_admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False)
@@ -105,17 +134,11 @@ class User(SqlAlchemyBase, UserMixin):
         return f"User('{self.name}', '{self.email}', '{self.image_file}')"
 
 
-class LoginForm(FlaskForm):
-    email = EmailField('Почта', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember_me = BooleanField('Remember Me')
-    submit = SubmitField('Sign In')
-
-
 @app.route('/')
 @app.route('/home')
 def index():
-    return render_template('index.html')
+    list_of_last_cards = db.session.query(Card).order_by(Card.created_date).limit(15).all()
+    return render_template('index.html', list_of_last_cards=list_of_last_cards)
 
 
 @app.route('/profile')
@@ -135,27 +158,30 @@ def for_admins():
 
 
 @app.route('/create-article', methods=['POST', 'GET'])
-def create_article():
-    if current_user.is_admin:
-
-        if request.method == 'POST':
-            title = request.form['title']
-            intro = request.form['intro']
-            text = request.form['text']
-
-            article = Article(title=title, intro=intro, text=text)
-
-            try:
-                db.session.add(article)
-                db.session.commit()
-                return redirect('/')
-
-            except:
-                return 'При добавлении статьи произошла ошибка'
+def create_card():
+    form = CardForm()
+    if current_user.is_authenticated and current_user.is_admin:
+        if form.validate_on_submit():
+            card = Card(title=form.title.data, released_year=form.released_year.data, runtime=form.runtime.data,
+                        genre=form.genre.data, director=form.director.data,
+                        list_of_user_ratings={'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0,
+                                              '10': 0})
+            db.session.add(card)
+            db.session.commit()
+            return redirect('/')
         else:
-            return render_template('create-article.html')
+            return render_template('create-card.html', form=form)
     else:
-        return 'Вы не являетесь администратором'
+        return render_template('create-card.html')
+
+
+@app.route('/card/<int:card_id>', methods=['GET', 'POST'])
+def card(card_id):
+    card = db.session.query(Card).filter(Card.id == card_id).first()
+    if card:
+        return render_template('card.html', card=card)
+    else:
+        return render_template('messages.html', message='Такого фильма или сериала не найдено')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -190,7 +216,7 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        return redirect('/login')
+        return redirect('/')
     return render_template('register.html', form=form)
 
 
@@ -203,4 +229,5 @@ def logout():
 
 if __name__ == '__main__':
     global_init('instance/main.db')
-    app.run(debug=True)
+    # app.run(debug=True)
+    app.run()
