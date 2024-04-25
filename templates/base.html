@@ -24,16 +24,19 @@
       <ul class="nav nav-pills">
 
         <li class="nav-item"><a href="http://127.0.0.1:5000" class="nav-link active" aria-current="page">Главная</a></li>
-        {% if current_user.is_authenticated %}   <a class="navbar-brand" href="/logout"><font color="white"><img width="40" height="40" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJx9X1j4gDIYI6mbjf2iO_x3DVLNg2CCvFgmlqIorCsA&s"></font></a>
-           <a class="navbar-brand" href="/profile"><h2><font color="white">Профиль</font></h2></a>
+        {% if current_user.is_authenticated %}<div class="content-sector"><div class="media">
+      <img class="rounded-circle account-img" width="40" height="40" src=" {{url_for('static', filename='profile_pics/default.png')}} ">
+          </div></div>
+<!--          <a class="navbar-brand" href="/logout"><font color="white"><img width="40" height="40" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJx9X1j4gDIYI6mbjf2iO_x3DVLNg2CCvFgmlqIorCsA&s"></font></a>-->
+           <a class="navbar-brand" href="/profile"><h5><font color="white">Профиль</font></h5></a>
 {% else %}
     <p>
-        <a class="btn btn-primary " href="/register">Зарегистрироваться</a>
+        <a class="btn btn-primary " href="/sign_up">Зарегистрироваться</a>
         <a class="btn btn-success" href="/login">Войти</a>
     </p>
 {% endif %}
         <li class="nav-item"><a href="http://127.0.0.1:5000/FAQ" class="nav-link"><font color="white">FAQs</font></a></li>
-        <li class="nav-item"><a href="http://127.0.0.1:5000/create-article" class="btn btn-warning">Создать статью</a></li>
+        <li class="nav-item"><a href="http://127.0.0.1:5000/create-article" class="btn btn-warning">Создать рецензию</a></li>
       </ul>
     </header></div>
     {% block body %}{% endblock %}

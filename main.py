@@ -1,20 +1,21 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 from datetime import datetime, timezone
 
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, TextAreaField, SubmitField, EmailField, BooleanField
+from wtforms import PasswordField, StringField, TextAreaField, SubmitField, EmailField, BooleanField, form
 from wtforms.validators import DataRequired
 
 import flask_login
-from flask_login import LoginManager, login_user, UserMixin, login_required, logout_user
+from flask_login import LoginManager, login_user, UserMixin, login_required, logout_user, current_user
 
 import sqlalchemy
 from sqlalchemy import orm
 from sqlalchemy.orm import Session
 
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf.file import FileField
 
 
 ADMIN_KEY = '123abc456def'  # !!!!!!
@@ -89,6 +90,7 @@ class User(SqlAlchemyBase, UserMixin):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String(20), nullable=False, unique=True)
     email = sqlalchemy.Column(sqlalchemy.String, index=True, unique=True, nullable=True)
+    image_file = sqlalchemy.Column(sqlalchemy.String(20), nullable=False, default='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJx9X1j4gDIYI6mbjf2iO_x3DVLNg2CCvFgmlqIorCsA&s%22')
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.now(timezone.utc))
     is_admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False)
@@ -100,7 +102,7 @@ class User(SqlAlchemyBase, UserMixin):
         return check_password_hash(self.hashed_password, password)
 
     def __repr__(self):
-        return '<User %r>' % self.id
+        return f"User('{self.name}', '{self.email}', '{self.image_file}')"
 
 
 class LoginForm(FlaskForm):
@@ -115,8 +117,10 @@ class LoginForm(FlaskForm):
 def index():
     return render_template('index.html')
 
+
 @app.route('/profile')
 def profile():
+    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('profile.html')
 
 
@@ -132,22 +136,26 @@ def for_admins():
 
 @app.route('/create-article', methods=['POST', 'GET'])
 def create_article():
-    if request.method == 'POST':
-        title = request.form['title']
-        intro = request.form['intro']
-        text = request.form['text']
+    if current_user.is_admin:
 
-        article = Article(title=title, intro=intro, text=text)
+        if request.method == 'POST':
+            title = request.form['title']
+            intro = request.form['intro']
+            text = request.form['text']
 
-        try:
-            db.session.add(article)
-            db.session.commit()
-            return redirect('/')
+            article = Article(title=title, intro=intro, text=text)
 
-        except:
-            return 'При добавлении статьи произошла ошибка'
+            try:
+                db.session.add(article)
+                db.session.commit()
+                return redirect('/')
+
+            except:
+                return 'При добавлении статьи произошла ошибка'
+        else:
+            return render_template('create-article.html')
     else:
-        return render_template('create-article.html')
+        return 'Вы не являетесь администратором'
 
 
 @app.route('/login', methods=['GET', 'POST'])
