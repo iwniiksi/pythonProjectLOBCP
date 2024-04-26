@@ -1,14 +1,17 @@
 {% extends "base.html" %}
 
 {% block body %}
-    <h1>{{ card.title }}</h1>
-    <h3>Год выпуска: {{ card.released_year }}<h3>
-    <h3>Продолжительность (в мин): {{ card.runtime }}<h3>
-    <h3>Жанр/ы: {{ card.genre }}<h3>
-    <h3>Режиссёр: {{ card.director }}<h3>
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+    <h1>{{ card.title }}</h1> </div>
+    <h3>Год выпуска: {{ card.released_year }}</h3>
+    <h3>Продолжительность (в мин): {{ card.runtime }}</h3>
+    <h3>Жанр/ы: {{ card.genre }}</h3>
+    <h3>Режиссёр: {{ card.director }}</h3>
     {% if card.user_rating %}
-        <h3>Пользовательский рейтинг: {{ card.user_rating }}<h3>
+        <h3>Пользовательский рейтинг: {{ card.user_rating }}</h3>
     {% else %}
         <h3>Нет Рейтинга</h3>
-    {% endif %}
+    {% endif %}</div></div>
 {% endblock %}
