@@ -159,11 +159,6 @@ def faq():
     return render_template('faq.html')
 
 
-@app.route('/for_admins')
-def for_admins():
-    return render_template('for_admins.html')
-
-
 @app.route('/create-article', methods=['POST', 'GET'])
 def create_card():
     form = CardForm()
