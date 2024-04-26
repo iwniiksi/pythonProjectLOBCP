@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}
+Профиль
+{% endblock %}
+
+{% block body %}
+
+<div class="container">
+<h2>Профиль</h2>
+<br>
+<div class="card">
+    <div class="card-header">
+       Добро пожаловать на страницу вашего профиля!
+    </div>
+    <div class="card-body">
+
+
+        <p class="card-text">
+
+
+        <div class="col-4">
+            <img class="rounded-circle account-img" width="100" height="100" src=" {{url_for('static', filename='profile_pics/default.png')}} ">
+        </div><br>
+
+            <div class="container">
+            <div class="row">
+                <div class="col-8">
+                    <h5><strong>Имя профиля:</strong>
+                    {{ current_user.name }}</h5><br>
+
+
+                    <h5><strong>Id:</strong>
+                    {{ current_user.id }}</h5><br>
+
+
+                    <h5><strong>Email:</strong>
+                    {{ current_user.email }}</h5><br>
+
+
+                    <h5><strong>Администратор?</strong>
+                    {{ current_user.is_admin }}</h5><br>
+                </div>
+
+            </div>
+
+
+
+        <a class="btn btn-warning" href="/logout"><h3><font color="white">Выйти</font></h3></a>
+
+    </div>
+
+        </p>
+
+
+    </div>
+
+</div>
+</div>
+
+{% endblock %}
