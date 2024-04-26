@@ -194,11 +194,13 @@ def add_score(card_id):
             form = AddScore()
             if form.validate_on_submit():
                 score = form.score.data
+                if not (1 <= score <= 10):
+                    return render_template('add-score.html', message='Неправильная оценка', form=form)
                 card.add_score(score)
                 db.session.commit()
                 return redirect(f'/card/{card_id}')
             return render_template('add-score.html', form=form)
-        return render_template('add-score.hrml', message='Вы не авторизованы', form=form)
+        return render_template('messages.html', message='Вы не авторизованы')
     return render_template('messages.html', message='Такого фильма или сериала не найдено')
 
 
