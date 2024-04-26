@@ -13,5 +13,7 @@
         <h3>Пользовательский рейтинг: {{ card.user_rating }}</h3>
     {% else %}
         <h3>Нет Рейтинга</h3>
-    {% endif %}</div></div>
+    {% endif %}
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='/add-score/{{ card.id }}'">Добавить оценку</button>
+    </div></div>
 {% endblock %}

@@ -10,7 +10,7 @@ Home
       <section class="jumbotron text-center">
         <div class="container">
           <h1 class="jumbotron-heading">AllCritic</h1>
-          <p class="lead text-muted">Сайт для оценки игр, фильмов, сериалов. :) (внизу должны находится примеры)<p>
+          <p class="lead text-muted">Сайт для оценки фильмов, сериалов. :)<p>
           </p>
         </div>
       </section>
@@ -29,10 +29,10 @@ Home
                       <p class="card-text">{{ card.title }}</p>
                       <div class="d-flex justify-content-between align-items-center">
                         <div class="btn-group">
-                          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='/card/{{ card.id }}'">View</button>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='/card/{{ card.id }}'">Открыть</button>
 <!--                      <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>-->
                         </div>
-                        <small class="text-muted">9 mins</small>
+                        <small class="text-muted">{{ card.user_rating }}</small>
                       </div>
                     </div>
                   </div>

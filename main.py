@@ -78,6 +78,11 @@ class CardForm(FlaskForm):
     submit = SubmitField('Добавить')
 
 
+class AddScore(FlaskForm):
+    score = IntegerField('Целое число от 1 до 10', validators=[DataRequired()])
+    submit = SubmitField('Добавить')
+
+
 class Card(SqlAlchemyBase):
     __tablename__ = 'cards'
 
@@ -88,7 +93,7 @@ class Card(SqlAlchemyBase):
     genre = sqlalchemy.Column(sqlalchemy.String(100), nullable=True)
     director = sqlalchemy.Column(sqlalchemy.String(100), nullable=True)
     user_rating = sqlalchemy.Column(sqlalchemy.Float, nullable=True)
-    list_of_user_ratings = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+    list_of_user_ratings = sqlalchemy.Column(sqlalchemy.PickleType(), nullable=True)
     # rating = sqlalchemy.Column(sqlalchemy.Float, nullable=True)
     # list_of_ratings = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.now(timezone.utc))
@@ -96,20 +101,22 @@ class Card(SqlAlchemyBase):
     def __repr__(self):
         return '<Card %r>' % self.id
 
-    # def update_rating(self):
-    #     summ, amount = 0, 0
-    #     for score, value in self.list_of_user_ratings.items():
-    #         summ += int(score) * value
-    #         amount += value
-    #     rating = summ / amount
-    #     self.user_rating = rating
+    def update_rating(self):
+        summ, amount = 0, 0
+        for score, value in self.list_of_user_ratings.items():
+            summ += int(score) * value
+            amount += value
+        rating = summ / amount
+        self.user_rating = round(rating, 2)
 
-    # def add_score(self, score: int):
-    #     if 1 <= score <= 10:
-    #         self.list_of_user_ratings[str(score)] += 1
-    #         self.update_rating()
-    #     else:
-    #         raise ValueError
+    def add_score(self, score: int):
+        if 1 <= score <= 10:
+            lst = self.list_of_user_ratings.copy()
+            lst[str(score)] += 1
+            self.list_of_user_ratings = lst
+            self.update_rating()
+        else:
+            raise ValueError
 
 
 class User(SqlAlchemyBase, UserMixin):
@@ -182,6 +189,22 @@ def card(card_id):
         return render_template('card.html', card=card)
     else:
         return render_template('messages.html', message='Такого фильма или сериала не найдено')
+
+
+@app.route('/add-score/<int:card_id>', methods=['GET', 'POST'])
+def add_score(card_id):
+    card = db.session.query(Card).filter(Card.id == card_id).first()
+    if card:
+        if current_user.is_authenticated:
+            form = AddScore()
+            if form.validate_on_submit():
+                score = form.score.data
+                card.add_score(score)
+                db.session.commit()
+                return redirect(f'/card/{card_id}')
+            return render_template('add-score.html', form=form)
+        return render_template('add-score.hrml', message='Вы не авторизованы', form=form)
+    return render_template('messages.html', message='Такого фильма или сериала не найдено')
 
 
 @app.route('/login', methods=['GET', 'POST'])
